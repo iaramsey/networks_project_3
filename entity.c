@@ -4,8 +4,8 @@
 /*                                                                            */
 /******************************************************************************/
 
-// Student names:
-// Student computing IDs:
+// Student names: James Weeden
+// Student computing IDs: jmw7dc
 //
 //
 // This file contains the actual code for the functions that will implement the
