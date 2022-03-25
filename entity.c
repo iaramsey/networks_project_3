@@ -80,11 +80,25 @@ void A_output(struct msg message) {
     packet.acknum = 0;
     memmove(packet.payload, message.data, 32);
     tolayer3_A(packet);
+    starttimer(0, 15);
 }
 
 void A_input(struct pkt packet) { }
 
-void A_timerinterrupt() { }
+void A_timerinterrupt() {
+    struct msg message;
+    msg.data = "hello";
+    msg.length = 32;
+    struct pkt packet;
+    packet.seqnum = 0;
+    packet.checksum = 0;
+    packet.length = message.length;
+    packet.acknum = 0;
+    memmove(packet.payload, message.data, 32);
+    tolayer3_A(packet);
+    starttimer(0, 15);
+
+}
 
 
 /**** B ENTITY ****/
