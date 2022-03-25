@@ -50,7 +50,9 @@
 
 /**** A ENTITY ****/
 
-void A_init(int window_size) { }
+void A_init(int window_size) {
+
+}
 
 void A_output(struct msg message) { }
 

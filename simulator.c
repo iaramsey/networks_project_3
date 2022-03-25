@@ -271,7 +271,7 @@ float jimsrand() {
   return x;
 }
 
-/************ EVENT HANDLING ROUTINES ****************/
+/************ EVENT HANDLING ROU32TINES ****************/
 /*  The next set of routines handle the event list   */
 /*****************************************************/
 
