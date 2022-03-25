@@ -63,6 +63,17 @@ struct pkt {
   char payload[32];
 };
 
+struct Sender {
+    enum SenderState state;
+    int seq;
+    float estimated_rtt;
+    struct pkt last_packet;
+} A;
+
+struct Receiver {
+    int seq;
+} B;
+
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
