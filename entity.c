@@ -48,15 +48,58 @@
 #include <stdio.h>
 #include "simulator.h"
 
+/** Global variable for total sequence value **/
+int totalSequenceBytes = 0;
+enum SenderState {
+    WAIT_LAYER5,
+    WAIT_ACK
+};
+
+struct Sender {
+    enum SenderState state;
+    int seq;
+    float estimated_rtt;
+    struct pkt last_packet;
+} A;
+
+struct Receiver {
+    int seq;
+} B;
+
 /**** A ENTITY ****/
 
-void A_init(int window_size) { }
+void A_init(int window_size) {
 
-void A_output(struct msg message) { }
+}
+
+void A_output(struct msg message) {
+    //Need to send 
+    struct pkt packet;
+    packet.seqnum = 0;
+    packet.checksum = 0;
+    packet.length = message.length;
+    packet.acknum = 0;
+    memmove(packet.payload, message.data, 32);
+    tolayer3_A(packet);
+    starttimer(0, 15);
+}
 
 void A_input(struct pkt packet) { }
 
-void A_timerinterrupt() { }
+void A_timerinterrupt() {
+    struct msg message;
+    msg.data = "hello";
+    msg.length = 32;
+    struct pkt packet;
+    packet.seqnum = 0;
+    packet.checksum = 0;
+    packet.length = message.length;
+    packet.acknum = 0;
+    memmove(packet.payload, message.data, 32);
+    tolayer3_A(packet);
+    starttimer(0, 15);
+
+}
 
 
 /**** B ENTITY ****/
