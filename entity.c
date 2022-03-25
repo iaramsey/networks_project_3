@@ -48,6 +48,21 @@
 #include <stdio.h>
 #include "simulator.h"
 
+/** Message Struct **/
+struct msg {
+  int length;
+  char data[32];
+};
+
+/** Packet Struct **/
+struct pkt {
+  int seqnum;
+  int acknum;
+  int checksum;
+  int length;
+  char payload[32];
+};
+
 /**** A ENTITY ****/
 
 void A_init(int window_size) { }
