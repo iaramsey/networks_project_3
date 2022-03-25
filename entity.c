@@ -51,20 +51,7 @@
 /** Global variable for total sequence value **/
 int totalSequenceBytes = 0;
 
-/** Message Struct **/
-struct msg {
-  int length;
-  char data[32];
-};
 
-/** Packet Struct **/
-struct pkt {
-  int seqnum;
-  int acknum;
-  int checksum;
-  int length;
-  char payload[32];
-};
 
 enum SenderState {
     WAIT_LAYER5,
