@@ -51,21 +51,6 @@
 /** Global variable for total sequence value **/
 int totalSequenceBytes = 0;
 
-/** Message Struct **/
-struct msg {
-  int length;
-  char data[32];
-};
-
-/** Packet Struct **/
-struct pkt {
-  int seqnum;
-  int acknum;
-  int checksum;
-  int length;
-  char payload[32];
-};
-
 enum SenderState {
     WAIT_LAYER5,
     WAIT_ACK
@@ -90,7 +75,11 @@ void A_init(int window_size) {
 
 void A_output(struct msg message) {
     struct pkt packet;
+    int dataSize = 32;
     packet.seqnum = totalSequenceBytes + message.length;
+    for(int i = 0; i < dataSize; i++){
+        packet.payload[i] =  message.data[i];
+    }
 }
 
 void A_input(struct pkt packet) { }
