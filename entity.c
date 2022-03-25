@@ -48,6 +48,9 @@
 #include <stdio.h>
 #include "simulator.h"
 
+/** Global variable for total sequence value **/
+int totalSequenceBytes = 0;
+
 /** Message Struct **/
 struct msg {
   int length;
@@ -82,10 +85,13 @@ struct Receiver {
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-
+    
 }
 
-void A_output(struct msg message) { }
+void A_output(struct msg message) {
+    struct pkt packet;
+    packet.seqnum = totalSequenceBytes + message.length;
+}
 
 void A_input(struct pkt packet) { }
 
