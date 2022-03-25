@@ -63,6 +63,11 @@ struct pkt {
   char payload[32];
 };
 
+enum SenderState {
+    WAIT_LAYER5,
+    WAIT_ACK
+};
+
 struct Sender {
     enum SenderState state;
     int seq;
