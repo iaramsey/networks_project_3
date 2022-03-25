@@ -50,7 +50,6 @@
 
 /** Global variable for total sequence value **/
 int totalSequenceBytes = 0;
-
 enum SenderState {
     WAIT_LAYER5,
     WAIT_ACK
@@ -70,7 +69,7 @@ struct Receiver {
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-    
+
 }
 
 void A_output(struct msg message) {
