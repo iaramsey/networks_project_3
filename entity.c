@@ -87,17 +87,17 @@ void A_output(struct msg message) {
 void A_input(struct pkt packet) { }
 
 void A_timerinterrupt() {
-    struct msg message;
-    msg.data = "hello";
-    msg.length = 32;
-    struct pkt packet;
-    packet.seqnum = 0;
-    packet.checksum = 0;
-    packet.length = message.length;
-    packet.acknum = 0;
-    memmove(packet.payload, message.data, 32);
-    tolayer3_A(packet);
-    starttimer(0, 15);
+//    struct msg message;
+//    message.data = "hello";
+//    message.length = 32;
+//    struct pkt packet;
+//    packet.seqnum = 0;
+//    packet.checksum = 0;
+//    packet.length = message.length;
+//    packet.acknum = 0;
+//    memmove(packet.payload, message.data, 32);
+//    tolayer3_A(packet);
+//    starttimer(0, 15);
 
 }
 
@@ -106,6 +106,11 @@ void A_timerinterrupt() {
 
 void B_init(int window_size) { }
 
-void B_input(struct pkt packet) { }
+void B_input(struct pkt packet) {
+    struct msg message;
+    memmove(message.data, packet.payload, 32);
+    message.length = 32;
+    tolayer5_B(message);
+}
 
 void B_timerinterrupt() { }
