@@ -73,13 +73,13 @@ void A_init(int window_size) {
 }
 
 void A_output(struct msg message) {
+    //Need to send 
     struct pkt packet;
-    packet.seqnum = 0;
-    packet.checksum = 0;
-    packet.length = message.length;
-    packet.acknum = 0;
-    memmove(packet.payload, message.data, 32);
-    tolayer3_A(packet);
+    int dataSize = 32;
+    packet.seqnum = totalSequenceBytes + message.length;
+    for(int i = 0; i < dataSize; i++){
+        packet.payload[i] =  message.data[i];
+    }
 }
 
 void A_input(struct pkt packet) { }
@@ -91,11 +91,6 @@ void A_timerinterrupt() { }
 
 void B_init(int window_size) { }
 
-void B_input(struct pkt packet) {
-    struct msg message;
-    memmove(message.data, packet.payload, 32);
-    message.length = 32;
-    tolayer5_B(message);
-}
+void B_input(struct pkt packet) { }
 
 void B_timerinterrupt() { }
