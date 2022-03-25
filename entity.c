@@ -73,15 +73,25 @@ void A_init(int window_size) {
 }
 
 void A_output(struct msg message) {
+    printf("debugging message\n");
+    printf("mesage length: %d\n", message.length);
+    printf(message.data);
     //Need to send 
     struct pkt packet;
-    packet.seqnum = 0;
-    packet.checksum = 0;
-    packet.length = message.length;
-    packet.acknum = 0;
-    memmove(packet.payload, message.data, 32);
+//    packet.seqnum = 0;
+//    packet.checksum = 0;
+//    packet.length = message.length;
+//    packet.acknum = 0;
+//    packet.payload = message.data;
+
+    int i;
+    for (i = 0; i < 32; i++) {
+        packet.payload[i] = message.data[i];
+    }
+//    memmove(packet.payload, message.data, message.length);
+    printf(packet.payload);
     tolayer3_A(packet);
-    starttimer(0, 15);
+    starttimer_A(1000.0);
 }
 
 void A_input(struct pkt packet) { }
@@ -95,7 +105,7 @@ void A_timerinterrupt() {
 //    packet.checksum = 0;
 //    packet.length = message.length;
 //    packet.acknum = 0;
-//    memmove(packet.payload, message.data, 32);
+//    memcpy(packet.payload, message.data, 32);
 //    tolayer3_A(packet);
 //    starttimer(0, 15);
 
@@ -108,7 +118,17 @@ void B_init(int window_size) { }
 
 void B_input(struct pkt packet) {
     struct msg message;
-    memmove(message.data, packet.payload, 32);
+//    memmove(message.data, packet.payload, packet.length);
+    int i;
+    message.data[32] = 0;
+    for (i = 0; i < 32; i++) {
+        message.data[i] = packet.payload[i];
+    }
+//    int i;
+//    for (i = 0; i < packet.length; i++) {
+//        printf(i);
+//    }
+//    message.data = packet.payload;
     message.length = 32;
     tolayer5_B(message);
 }
