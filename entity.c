@@ -50,9 +50,6 @@
 
 /** Global variable for total sequence value **/
 int totalSequenceBytes = 0;
-
-
-
 enum SenderState {
     WAIT_LAYER5,
     WAIT_ACK
@@ -72,12 +69,16 @@ struct Receiver {
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-    
+
 }
 
 void A_output(struct msg message) {
     struct pkt packet;
+    int dataSize = 32;
     packet.seqnum = totalSequenceBytes + message.length;
+    for(int i = 0; i < dataSize; i++){
+        packet.payload[i] =  message.data[i];
+    }
 }
 
 void A_input(struct pkt packet) { }
