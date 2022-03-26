@@ -72,16 +72,28 @@ void A_init(int window_size) {
 
 }
 
+void printMessage(struct msg *message) {
+    int i;
+    for (i = 0; i < 32; i++) {
+        printf(message->data[i]);
+    }
+    printf("\n");
+}
+
 void A_output(struct msg message) {
-    printf("debugging message\n");
-    printf("mesage length: %d\n", message.length);
+
+//    printMessage(&message);
+//    printf("message length --------------");
     printf(message.data);
+    printf("\n");
+//    printf(message.length);
+
     //Need to send 
     struct pkt packet;
-//    packet.seqnum = 0;
-//    packet.checksum = 0;
-//    packet.length = message.length;
-//    packet.acknum = 0;
+    packet.seqnum = 0;
+    packet.checksum = 0;
+    packet.length = message.length;
+    packet.acknum = 0;
 //    packet.payload = message.data;
 
     int i;
@@ -90,6 +102,8 @@ void A_output(struct msg message) {
     }
 //    memmove(packet.payload, message.data, message.length);
     printf(packet.payload);
+//    printf("packet payload: %d\n", packet.payload);
+    printf("\n");
     tolayer3_A(packet);
     starttimer_A(1000.0);
 }
@@ -124,12 +138,7 @@ void B_input(struct pkt packet) {
     for (i = 0; i < 32; i++) {
         message.data[i] = packet.payload[i];
     }
-//    int i;
-//    for (i = 0; i < packet.length; i++) {
-//        printf(i);
-//    }
-//    message.data = packet.payload;
-    message.length = 32;
+    message.length = packet.length;
     tolayer5_B(message);
 }
 
