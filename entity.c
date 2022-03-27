@@ -113,11 +113,11 @@ void B_init(int window_size) {
 void B_input(struct pkt packet) {
     struct msg message;
     message.length = packet.length;
-//    memmove(message.data, packet.payload, packet.length);
-    int i;
-    for (i = 0; i < packet.length; i++) {
-        message.data[i] = packet.payload[i];
-    }
+    memmove(message.data, packet.payload, packet.length);
+//    int i;
+//    for (i = 0; i < packet.length; i++) {
+//        message.data[i] = packet.payload[i];
+//    }
     tolayer5_B(message);
 }
 
