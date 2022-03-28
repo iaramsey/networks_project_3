@@ -89,8 +89,8 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
-    counter++;
-    printf("-----------------------ack received from B, Counter: %d\n", counter);
+    A.index++;
+    printf("-----------------------ack received from B, Counter: %d\n", A.index);
 
 }
 
