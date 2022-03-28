@@ -49,23 +49,17 @@
 #include <string.h>
 #include "simulator.h"
 
-/** Global variable for total sequence value **/
-int totalSequenceBytes = 0;
-enum SenderState {
-    WAIT_LAYER5,
-    WAIT_ACK
-};
 
 struct Sender {
-    enum SenderState state;
-    int seq;
-    float estimated_rtt;
+    int index;
     struct pkt last_packet;
 } A;
 
 struct Receiver {
-    int seq;
+    int index;
 } B;
+
+int counter;
 
 
 
@@ -73,14 +67,15 @@ struct Receiver {
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-
+    A.index = 0;
+    counter = 0;
 }
 
 
 void A_output(struct msg message) {
 
     struct pkt packet;
-    packet.seqnum = 0;
+    packet.seqnum = A.index;
     packet.length = message.length; //is length needed??
     packet.checksum = 0;
     packet.acknum = 0;
@@ -94,6 +89,9 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
+    counter++;
+    printf("-----------------------ack received from B, Counter: %d\n", counter);
+
 }
 
 void A_timerinterrupt() {
@@ -108,16 +106,19 @@ void B_init(int window_size) {
 }
 
 
+void send_ack() {
+    struct pkt packet;
+//    packet.payload = "ack";
+    packet.length = 3;
+    tolayer3_B(packet);
+}
 
 
 void B_input(struct pkt packet) {
     struct msg message;
     message.length = packet.length;
     memmove(message.data, packet.payload, packet.length);
-//    int i;
-//    for (i = 0; i < packet.length; i++) {
-//        message.data[i] = packet.payload[i];
-//    }
+    send_ack();
     tolayer5_B(message);
 }
 
