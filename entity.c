@@ -46,66 +46,120 @@
 // `output.dat`.
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include "simulator.h"
 
-/** Global variable for total sequence value **/
-int totalSequenceBytes = 0;
-enum SenderState {
-    WAIT_LAYER5,
-    WAIT_ACK
-};
+/*
+ * GLOBAL VARIABLES
+ */
+int sequence_number;
+int counter;
 
-struct Sender {
-    enum SenderState state;
-    int seq;
-    float estimated_rtt;
-    struct pkt last_packet;
-} A;
 
-struct Receiver {
-    int seq;
-} B;
+// struct Sender {
+//     int index;              // gives the sequence number of the given packet
+//     struct pkt last_packet; // last packet sent 
+// } A;
+
+// struct Receiver {
+//     int index;
+// } B;
 
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
+    // window_size only matters for Go-Back-N protocol
+    sequence_number = 0;
+    counter = 0;
+}
 
+// returns pointer to a packet
+struct pkt* create_packet(struct msg *message) {
+    // 1. new packet created (use malloc)
+    struct pkt *packet = (struct pkt *)malloc(sizeof(struct pkt));
+    // 2. determine the sequence number
+    packet->seqnum = sequence_number;
+    // 3. determine the ack number
+    packet->acknum = sequence_number;
+    // 4. determine lenfth of data in the packet
+    packet->length = message->length;
+    // 5. use memcopy to copy data into the packet
+    memcpy(packet->payload, message->data, message->length);
+    // 6. calculate the checksum and set it to packet->checksum
+    packet->checksum = packet->seqnum ^ packet->acknum ^ packet->length;
+    for(int i = 0; i < sizeof(packet->payload); i++){
+        packet->checksum ^= packet->payload[i];
+    }
+    // 7. increment the sequence number (and modulo by SEQUENCE = 1024 to keep within 1024)
+    sequence_number = (sequence_number + 1) % 1024;
+
+    return packet;
 }
 
 void A_output(struct msg message) {
-    //Need to send 
+
+    // create and send packet in the output. When do you add to queue of messages? In the output
+    // 1. create packet (dereference pointer to created packet)
+    struct pkt packet = *create_packet(&message);
+    // 2. put into queue
+
+    // 3. send packet from queue
+
+    /* -- old implementation
     struct pkt packet;
-    packet.seqnum = 0;
+    packet.seqnum = A.index;
+    packet.length = message.length; //is length needed??
     packet.checksum = 0;
-    packet.length = message.length;
     packet.acknum = 0;
-    memmove(packet.payload, message.data, 32);
+    memmove(packet.payload, message.data, message.length);
+    */
+
+
     tolayer3_A(packet);
-    starttimer(0, 15);
+    starttimer_A(1000.0);
+
+
+
 }
 
-void A_input(struct pkt packet) { }
+/*
+ * Code for A_input should only handle:
+ * 1. ACK's sent from B to A if they are corrupted or lost
+ * 2. Resend packets that were corrupted or lost
+ */
+void A_input(struct pkt packet) {
+    //A.index++; // may be redundant due to inclusion in packet struct
+    printf("-----------------------ack received from B, Counter: %d\n", sequence_number);
+
+}
 
 void A_timerinterrupt() {
-    struct msg message;
-    msg.data = "hello";
-    msg.length = 32;
-    struct pkt packet;
-    packet.seqnum = 0;
-    packet.checksum = 0;
-    packet.length = message.length;
-    packet.acknum = 0;
-    memmove(packet.payload, message.data, 32);
-    tolayer3_A(packet);
-    starttimer(0, 15);
 
 }
 
 
 /**** B ENTITY ****/
 
-void B_init(int window_size) { }
+void B_init(int window_size) {
 
-void B_input(struct pkt packet) { }
+}
+
+
+void send_ack() {
+    struct pkt packet;
+//    packet.payload = "ack";
+    packet.length = 3;
+    tolayer3_B(packet);
+}
+
+
+void B_input(struct pkt packet) {
+    struct msg message;
+    message.length = packet.length;
+    memmove(message.data, packet.payload, packet.length);
+    send_ack();
+    tolayer5_B(message);
+}
 
 void B_timerinterrupt() { }
