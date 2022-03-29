@@ -53,8 +53,11 @@
 /*
  * GLOBAL VARIABLES
  */
+// A side
 int sequence_number;
 int counter;
+// B side
+int expected_seqnum;
 
 
 // struct Sender {
@@ -87,12 +90,12 @@ struct pkt* create_packet(struct msg *message) {
     // 5. use memcopy to copy data into the packet
     memcpy(packet->payload, message->data, message->length);
     // 6. calculate the checksum and set it to packet->checksum
-    packet->checksum = packet->seqnum ^ packet->acknum ^ packet->length;
+    packet->checksum = 0 ^ packet->seqnum ^ packet->acknum ^ packet->length;
     for(int i = 0; i < sizeof(packet->payload); i++){
         packet->checksum ^= packet->payload[i];
     }
     // 7. increment the sequence number (and modulo by SEQUENCE = 1024 to keep within 1024)
-    sequence_number = (sequence_number + 1) % 1024;
+    sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
 
     return packet;
 }
@@ -117,12 +120,10 @@ void A_output(struct msg message) {
 
     // send the packet to the network layer
     tolayer3_A(packet);
+    free(&packet);
 
     // start the timer
     starttimer_A(1000.0);
-
-
-
 }
 
 /*
@@ -144,26 +145,46 @@ void A_timerinterrupt() {
 /**** B ENTITY ****/
 
 void B_init(int window_size) {
-
+    expected_seqnum = 0;
 }
 
 void send_ack(int ack) {
-    struct pkt ack_packet;
+    struct pkt *ack_packet = (struct pkt *)malloc(sizeof(struct pkt));
     // set ack value to passed in ack
-    ack_packet.acknum = ack;
+    ack_packet->acknum = ack;
     // filler value for checksum, needs to be computed
-    ack_packet.checksum = 0;
-    tolayer3_B(ack_packet);
+    ack_packet->checksum = 0;
+    tolayer3_B(*ack_packet);
+    free(ack_packet);
 }
 
 
 void B_input(struct pkt packet) {
-    struct msg message;
-    message.length = packet.length;
-    memmove(message.data, packet.payload, packet.length);
-    // filler value, need to determine how to compute ACK number
-    send_ack(0);
-    tolayer5_B(message);
+    //1. check if packet is valid based on checksum
+    int pass_checksum = 0;
+    int pass_seqnum = 0;
+    int expected_checksum = 0 ^ packet.seqnum ^ packet.acknum ^ packet.length;
+    for(int i = 0; i < sizeof(packet.payload); i++){
+        expected_checksum ^= packet.payload[i];
+    }
+    if(expected_checksum == packet.checksum){
+        pass_checksum = 1;
+    }
+    //2. check if sequence number matches expected sequence number
+    expected_seqnum = (expected_seqnum + 1) % 2;;
+    if(packet.seqnum == expected_seqnum){
+        pass_seqnum = 1;
+    }
+    //3. strip message and length from packet and send to layer 5
+    if(pass_checksum = 1 && pass_seqnum == 1){
+        //check incoming packet for sequence 
+        struct msg message;
+        message.length = packet.length;
+        memmove(message.data, packet.payload, packet.length);
+        tolayer5_B(message);
+        //4. create new packet that acknowledges current packet and send to layer 3
+        send_ack(packet.seqnum); // the ack value should match the sequence number
+    }
 }
 
 void B_timerinterrupt() { }
