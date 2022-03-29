@@ -53,23 +53,26 @@
 /*
  * GLOBAL VARIABLES
  */
-// A side
+// // A side
 int sequence_number;
 int counter;
+int total_packet_number = 0;
 // save packet in global variable so that it can be resent with interrupt
 struct pkt* last_pkt = NULL;
 
 // B side
 int expected_seqnum;
 
-
+// // A side global variables
 // struct Sender {
-//     int index;              // gives the sequence number of the given packet
-//     struct pkt last_packet; // last packet sent 
+//     int sequence_number;    // gives the sequence number of the given packet
+//     // save packet in global variable so that it can be resent with interrupt
+//     struct pkt* last_pkt;
 // } A;
 
+// // B side global variables
 // struct Receiver {
-//     int index;
+//     int expected_seqnum;
 // } B;
 
 /**** A ENTITY ****/
@@ -101,6 +104,7 @@ struct pkt* create_packet(struct msg *message) {
     sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
 
     last_pkt = packet;
+    total_packet_number++;
     return packet;
 }
 
@@ -114,10 +118,11 @@ void A_output(struct msg message) {
     // 3. send packet from queue
 
     // 4. send the packet to the network layer
+    printf("Total packet number is (A_output): %d\n", total_packet_number);
     tolayer3_A(packet);
 
     // 5. start the timer
-    starttimer_A(1000.0);
+    starttimer_A(1.0);
 }
 
 /*
@@ -129,26 +134,27 @@ void A_input(struct pkt packet) {
 
     // 1. if packet corrupted, drop it
     if(packet.checksum != (0^packet.acknum)){
+        printf("CHECKSUM INDICATES CORRUPTION\n");
         // return from A_input w/o doing anything
         return;
     }
     // 2. if it isnt corrupted, and ack is not for the packet that you sent, drop it
-    else if(packet.acknum != sequence_number){
+    if(packet.acknum != sequence_number){
+        printf("ACK IS NOT FOR PACKET THAT WAS SENT\n");
         // return from A_input w/o doing anything
         return;
     }
     // 3. If recieved properly
-    else{
-        // stop the timer and return
-        stoptimer_A();
-        return;
-    }    
-
+    // stop the timer and return
+    printf("TIMER HAS BEEN STOPPED\n");
+    stoptimer_A();
+    return;  
 }
 
 void A_timerinterrupt() {
     // go here due to timeout
     // use to resend packet
+    printf("TIMEOUT OCURRED\n");
     tolayer3_A(*last_pkt);
 }
 
@@ -160,6 +166,7 @@ void B_init(int window_size) {
 }
 
 void send_ack(int ack) {
+    printf("ACK %d SENT\n", ack);
     struct pkt *ack_packet = (struct pkt *)malloc(sizeof(struct pkt));
     // set ack value to passed in ack
     ack_packet->acknum = ack;

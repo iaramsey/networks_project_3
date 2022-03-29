@@ -1,0 +1,34 @@
+          GENERATE NEXT ARRIVAL: creating new arrival
+            INSERTEVENT: time is 0.000000
+            INSERTEVENT: future time will be 14.289714
+
+EVENT time: 14.289714,  type: 1, fromlayer5  entity: 0
+          MAINLOOP: data given to student: testing Iain
+
+          TOLAYER3: seq: 0, ack 0, check: 126 testing Iain
+
+            INSERTEVENT: time is 14.289714
+            INSERTEVENT: future time will be 15.440983
+          START TIMER: starting timer at 14.289714
+            INSERTEVENT: time is 14.289714
+            INSERTEVENT: future time will be 1014.289734
+
+EVENT time: 15.440983,  type: 2, fromlayer3  entity: 1
+
+EVENT time: 1014.289734,  type: 0, timerinterrupt   entity: 0
+          TOLAYER3: seq: 0, ack 0, check: 126 testing Iain
+
+            INSERTEVENT: time is 1014.289734
+            INSERTEVENT: future time will be 1016.090576
+
+EVENT time: 1016.090576,  type: 2, fromlayer3  entity: 1
+          TOLAYER5: data received: testing Iain
+
+          TOLAYER3: seq: 0, ack 0, check: 0 
+            INSERTEVENT: time is 1016.090576
+            INSERTEVENT: future time will be 1018.913696
+
+EVENT time: 1018.913696,  type: 2, fromlayer3  entity: 0
+-----------------------ack received from B, Counter: 1
+ Simulator terminated at time 1018.913696
+ after sending 1 msgs from layer5
