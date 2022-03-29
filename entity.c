@@ -56,6 +56,9 @@
 // A side
 int sequence_number;
 int counter;
+// save packet in global variable so that it can be resent with interrupt
+struct pkt* last_pkt = NULL;
+
 // B side
 int expected_seqnum;
 
@@ -97,6 +100,7 @@ struct pkt* create_packet(struct msg *message) {
     // 7. increment the sequence number (and modulo by SEQUENCE = 1024 to keep within 1024)
     sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
 
+    last_pkt = packet;
     return packet;
 }
 
@@ -109,35 +113,43 @@ void A_output(struct msg message) {
 
     // 3. send packet from queue
 
-    /* -- old implementation
-    struct pkt packet;
-    packet.seqnum = A.index;
-    packet.length = message.length; //is length needed??
-    packet.checksum = 0;
-    packet.acknum = 0;
-    memmove(packet.payload, message.data, message.length);
-    */
-
-    // send the packet to the network layer
+    // 4. send the packet to the network layer
     tolayer3_A(packet);
 
-    // start the timer
+    // 5. start the timer
     starttimer_A(1000.0);
 }
 
 /*
  * Code for A_input should only handle:
  * 1. ACK's sent from B to A if they are corrupted or lost
- * 2. Resend packets that were corrupted or lost
  */
 void A_input(struct pkt packet) {
-    //A.index++; // may be redundant due to inclusion in packet struct
     printf("-----------------------ack received from B, Counter: %d\n", sequence_number);
+
+    // 1. if packet corrupted, drop it
+    if(packet.checksum != (0^packet.acknum)){
+        // return from A_input w/o doing anything
+        return;
+    }
+    // 2. if it isnt corrupted, and ack is not for the packet that you sent, drop it
+    else if(packet.acknum != sequence_number){
+        // return from A_input w/o doing anything
+        return;
+    }
+    // 3. If recieved properly
+    else{
+        // stop the timer and return
+        stoptimer_A();
+        return;
+    }    
 
 }
 
 void A_timerinterrupt() {
-
+    // go here due to timeout
+    // use to resend packet
+    tolayer3_A(*last_pkt);
 }
 
 
@@ -152,7 +164,7 @@ void send_ack(int ack) {
     // set ack value to passed in ack
     ack_packet->acknum = ack;
     // filler value for checksum, needs to be computed
-    ack_packet->checksum = 0;
+    ack_packet->checksum = 0^ack_packet->acknum;
     tolayer3_B(*ack_packet);
     free(ack_packet);
 }
