@@ -57,7 +57,7 @@ enum SenderState {
 
 struct Sender {
     enum SenderState state;
-    int seq;
+    int index;
     float estimated_rtt;
     struct pkt last_packet;
 } A;
@@ -66,7 +66,7 @@ struct Receiver {
     int index;
 } B;
 
-int counter;
+
 
 
 
@@ -74,43 +74,52 @@ int counter;
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-    A.seq = 0;
-    counter = 0;
+    A.index = 0;
 }
 
 
+int get_checksum(struct pkt *packet) {
+    int checksum = 0;
+    checksum += packet->seqnum;
+    checksum += packet->acknum;
+    for (int i = 0; i < packet->length; i++)
+        checksum += packet->payload[i];
+    return checksum;
+}
+
 void A_output(struct msg message) {
-
     struct pkt packet;
-    packet.seqnum = A.seq;
-    packet.length = message.length; //is length needed??
-    packet.checksum = 0;
-    packet.acknum = 0;
+    //seqnum and acknum are the same when the packet is sent from the sender
+    packet.seqnum = A.index;
+    packet.acknum = A.index;
+    packet.length = message.length;
     memmove(packet.payload, message.data, message.length);
-
+    packet.checksum = get_checksum(&packet);
     tolayer3_A(packet);
     starttimer_A(1000.0);
-
-
-
 }
 
 void A_input(struct pkt packet) {
-    if (A.state == WAIT_LAYER5) {
-        printf("currently waiting from layer5 input form A\n");
-        return;
-    }
-    //need to check for incorrect checksum
+//    if (A.state == WAIT_LAYER5) {
+//        printf("currently waiting from layer5 input form A\n");
+//        return;
+//    }
+//    //need to check for incorrect checksum
+//
+//    //need to check for seqnum being wrong
+//    if (A.index != packet.acknum){
+//        printf("incorrect acknum\n");
+//        return;
+//    }
+//
+//    printf("-----------------------ack succesfully received");
 
-    //need to check for seqnum being wrong
-    if (A.se != packet.seqnum){
-        printf("incorrect sequence number\n");
-        return;
+    printf("-----------------A.index: %d, B.index: %d\n", A.index, B.index);
+    if (A.index == packet.acknum) {
+        printf("we did it baby, same index value %d\n", A.index);
     }
-
-    printf("-----------------------ack succesfully received");
     A.state = WAIT_LAYER5;
-    A.seq++;
+    A.index++;
     stoptimer_A();
 
 }
@@ -123,23 +132,43 @@ void A_timerinterrupt() {
 /**** B ENTITY ****/
 
 void B_init(int window_size) {
-
+    B.index = 0;
 }
 
 
-void send_ack() {
+void send_ack(int ack) {
     struct pkt packet;
-//    packet.payload = "ack";
-    packet.length = 3;
+    packet.acknum = ack;
+    packet.seqnum = 0;
+    char myArray[32] = {0};
+    memmove(packet.payload, myArray, 32);
+    packet.length = 0;
+
+//    packet.checksum = get_checksum(&packet);
     tolayer3_B(packet);
 }
 
 
 void B_input(struct pkt packet) {
+//    if (packet.checksum != get_checksum(&packet)) {
+//        printf("  B_input: packet corrupted. send NAK.\n");
+//        send_ack(1 - B.index);
+//        return;
+//    }
+//    if (packet.seqnum != B.index) {
+//        printf("  B_input: not the expected seq. send NAK.\n");
+//        send_ack(1 - B.index);
+//        return;
+//    }
+//    printf("  B_input: recv message: %s\n", packet.payload);
+//    printf("  B_input: send ACK.\n");
+
+//    printf("------------------B.index: %d\n", B.index);
+    send_ack(B.index);
+    B.index++;
     struct msg message;
     message.length = packet.length;
     memmove(message.data, packet.payload, packet.length);
-    send_ack();
     tolayer5_B(message);
 }
 
