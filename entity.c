@@ -82,7 +82,7 @@ struct pkt* create_packet(struct msg *message) {
     packet->seqnum = sequence_number;
     // 3. determine the ack number
     packet->acknum = sequence_number;
-    // 4. determine lenfth of data in the packet
+    // 4. determine length of data in the packet
     packet->length = message->length;
     // 5. use memcopy to copy data into the packet
     memcpy(packet->payload, message->data, message->length);
@@ -115,8 +115,10 @@ void A_output(struct msg message) {
     memmove(packet.payload, message.data, message.length);
     */
 
-
+    // send the packet to the network layer
     tolayer3_A(packet);
+
+    // start the timer
     starttimer_A(1000.0);
 
 
@@ -145,12 +147,13 @@ void B_init(int window_size) {
 
 }
 
-
-void send_ack() {
-    struct pkt packet;
-//    packet.payload = "ack";
-    packet.length = 3;
-    tolayer3_B(packet);
+void send_ack(int ack) {
+    struct pkt ack_packet;
+    // set ack value to passed in ack
+    ack_packet.acknum = ack;
+    // filler value for checksum, needs to be computed
+    ack_packet.checksum = 0;
+    tolayer3_B(ack_packet);
 }
 
 
@@ -158,7 +161,8 @@ void B_input(struct pkt packet) {
     struct msg message;
     message.length = packet.length;
     memmove(message.data, packet.payload, packet.length);
-    send_ack();
+    // filler value, need to determine how to compute ACK number
+    send_ack(0);
     tolayer5_B(message);
 }
 
