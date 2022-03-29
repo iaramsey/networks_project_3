@@ -120,7 +120,6 @@ void A_output(struct msg message) {
 
     // send the packet to the network layer
     tolayer3_A(packet);
-    free(&packet);
 
     // start the timer
     starttimer_A(1000.0);
@@ -176,7 +175,7 @@ void B_input(struct pkt packet) {
         pass_seqnum = 1;
     }
     //3. strip message and length from packet and send to layer 5
-    if(pass_checksum = 1 && pass_seqnum == 1){
+    if(pass_checksum == 1 && pass_seqnum == 1){
         //check incoming packet for sequence 
         struct msg message;
         message.length = packet.length;
