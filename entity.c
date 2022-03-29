@@ -50,8 +50,15 @@
 #include "simulator.h"
 
 
+enum SenderState {
+    WAIT_LAYER5,
+    WAIT_ACK
+};
+
 struct Sender {
-    int index;
+    enum SenderState state;
+    int seq;
+    float estimated_rtt;
     struct pkt last_packet;
 } A;
 
@@ -67,7 +74,7 @@ int counter;
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-    A.index = 0;
+    A.seq = 0;
     counter = 0;
 }
 
@@ -75,7 +82,7 @@ void A_init(int window_size) {
 void A_output(struct msg message) {
 
     struct pkt packet;
-    packet.seqnum = A.index;
+    packet.seqnum = A.seq;
     packet.length = message.length; //is length needed??
     packet.checksum = 0;
     packet.acknum = 0;
@@ -89,8 +96,22 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
-    A.index++;
-    printf("-----------------------ack received from B, Counter: %d\n", A.index);
+    if (A.state == WAIT_LAYER5) {
+        printf("currently waiting from layer5 input form A\n");
+        return;
+    }
+    //need to check for incorrect checksum
+
+    //need to check for seqnum being wrong
+    if (A.se != packet.seqnum){
+        printf("incorrect sequence number\n");
+        return;
+    }
+
+    printf("-----------------------ack succesfully received");
+    A.state = WAIT_LAYER5;
+    A.seq++;
+    stoptimer_A();
 
 }
 
