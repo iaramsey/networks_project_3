@@ -47,6 +47,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "simulator.h"
 
 
@@ -58,24 +59,21 @@ enum SenderState {
 };
 
 struct Sender {
-    enum SenderState state;
-    int index;
-    float estimated_rtt;
-    struct pkt last_packet;
+    enum SenderState state; //state of the sender
+    struct pkt packetBuffer[1024]; //array of packets that are waiting to be sent to B
+    int bufferIndex; //value for the next new message to be added to the buffer, should be ahead of A.base
+    int base; //starting value for the sender window
+    int bufferSize; //number of packets currently in the queue, ++ when A receives a message from layer 5, -- when A receives an ACK from B
 } A;
 
 struct Receiver {
-    int expectedSeq;
-
+    int expectedSeq; //expected sequence number B is looking for
 } B;
 
 
-//GLOBAL VARIABLES FOR SENDER, A
-struct pkt packetBuffer[1000]; //array of messages that are added from layer 5 (aka test1.txt)
-int bufferIndex;
-struct pkt window[3]; //array of packets representing the sender's window
-int base; //index for packetBuffer[] for the first message in the window to be sent, i.e. start of the window
-int sequence_number;
+
+
+
 
 
 
@@ -83,10 +81,11 @@ int sequence_number;
 /**** A ENTITY ****/
 
 void A_init(int window_size) {
-    A.index = 0;
-    bufferIndex = 0;
-    base = 0;
-    sequence_number = 0;
+    A.bufferIndex = 0;
+    A.base = 0;
+    A.state = readyToSend;
+    A.bufferSize = 0;
+
 
 
 }
@@ -95,9 +94,9 @@ struct pkt* create_packet(struct msg *message) {
     // 1. new packet created (use malloc)
     struct pkt *packet = (struct pkt *)malloc(sizeof(struct pkt));
     // 2. determine the sequence number
-    packet->seqnum = bufferIndex;
+    packet->seqnum = A.bufferIndex;
     // 3. determine the ack number
-    packet->acknum = bufferIndex;
+    packet->acknum = A.bufferIndex;
     // 4. determine length of data in the packet
     packet->length = message->length;
     // 5. use memcopy to copy data into the packet
@@ -107,31 +106,22 @@ struct pkt* create_packet(struct msg *message) {
     for(int i = 0; i < sizeof(packet->payload); i++){
         packet->checksum ^= packet->payload[i];
     }
-    // 7. increment the sequence number (and modulo by SEQUENCE = 1024 to keep within 1024)
-    sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
-
-//    last_pkt = packet;
-//    total_packet_number++;
     return packet;
 }
 
 void A_output(struct msg message) {
-    //sendWindow(base, windowsize)
-//    printf("message.data: %s\n", message.data);
-    struct pkt packet = *create_packet(&message);
 
-    packetBuffer[bufferIndex] = packet;
+    struct pkt packet = *create_packet(&message); //create packet from message parameter
+    A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
+    A.bufferIndex++; //increment buffer index
+    A.bufferSize++; //increment size
 
-//    printf("Here's what's in the buffer at index %d: %s\n", bufferIndex, packetBuffer[bufferIndex].payload);
-    bufferIndex++;
-
-    if (A.state == readyToSend) {
-        printf("sending packet %d from A\n", base);
-//        printf("packet payload: %s\n", packet.payload);
-        tolayer3_A(packetBuffer[base]);
+    if (A.state == readyToSend) { //only send packet if sender is ready
+        printf("sending packet %d from A\n", A.base);
+        tolayer3_A(A.packetBuffer[A.base]); //send the packet from base
+        //EVENTUALLY WILL BE SEND WINDOW HERE
         starttimer_A(100.0);
-        A.state = waitingForAck;
-        A.last_packet = packet;
+        A.state = waitingForAck; //
     }
 }
 
@@ -142,27 +132,28 @@ void A_input(struct pkt packet) {
 
 
 //    printf("A.index: %d, B.acknum: %d\n", A.index, packet.acknum);
-    if (base == packet.acknum) {
-        printf("we did it baby, same index value %d\n", base);
+    if (A.base == packet.acknum) {
+        printf("we did it baby, same index value %d\n", A.base);
     }
     A.state = readyToSend;
-    base++;
-//    printf("base value: %d\n", base);
-    printf("bufferIndex value: %d\n", bufferIndex);
-    if (base >= bufferIndex) {
+    A.base++;
+//    printf("A.base value: %d\n", A.base);
+//    printf("A.bufferIndex value: %d\n", A.bufferIndex);
+    if (A.base >= A.bufferIndex) {
         printf("we've gone through all of the messages in the buffer\n");
         return;
     }
+
     stoptimer_A();
-    printf("sending packet %d from A\n", base);
-    tolayer3_A(packetBuffer[base]);
+    printf("sending packet %d from A\n", A.base);
+    tolayer3_A(A.packetBuffer[A.base]);
     starttimer_A(1000.0);
     A.state = waitingForAck;
 
 }
 
 void A_timerinterrupt() {
-    tolayer3_A(A.last_packet);
+//    tolayer3_A(A.last_packet);
 }
 
 
@@ -189,10 +180,10 @@ void send_ack(int ack) {
 void B_input(struct pkt packet) {
 
 //    printf("seqnum being recieved from B: %d\n", packet.seqnum);
-//    if (packet.seqnum != B.index) {
-//        printf("Wrong seqnum\n");
-//        return;
-//    }
+    if (packet.seqnum != B.expectedSeq) {
+        printf("Wrong seqnum\n");
+        return;
+    }
     if (packet.seqnum != B.expectedSeq)
         return;
     printf("receiving packet %d from B\n", packet.seqnum);
