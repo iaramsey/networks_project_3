@@ -88,36 +88,32 @@ int get_checksum(struct pkt *packet) {
 }
 
 void A_output(struct msg message) {
+
+//    if (A.state != WAIT_LAYER5) {
+//        printf("still waiting for ack, don't send anything. Dropping %s\n", message.data);
+//        return;
+//    }
     struct pkt packet;
     //seqnum and acknum are the same when the packet is sent from the sender
     packet.seqnum = A.index;
     packet.acknum = A.index;
+    printf("sequence number being sent form A: %d\n", packet.seqnum);
     packet.length = message.length;
     memmove(packet.payload, message.data, message.length);
     packet.checksum = get_checksum(&packet);
     tolayer3_A(packet);
     starttimer_A(1000.0);
+    A.state = WAIT_ACK;
+    A.last_packet = packet;
 }
 
 void A_input(struct pkt packet) {
-//    if (A.state == WAIT_LAYER5) {
-//        printf("currently waiting from layer5 input form A\n");
-//        return;
-//    }
-//    //need to check for incorrect checksum
-//
-//    //need to check for seqnum being wrong
-//    if (A.index != packet.acknum){
-//        printf("incorrect acknum\n");
-//        return;
-//    }
-//
-//    printf("-----------------------ack succesfully received");
 
-    printf("-----------------A.index: %d, B.index: %d\n", A.index, B.index);
-    if (A.index == packet.acknum) {
-        printf("we did it baby, same index value %d\n", A.index);
-    }
+
+    printf("A.index: %d, B.acknum: %d\n", A.index, packet.acknum);
+//    if (A.index == packet.acknum) {
+//        printf("we did it baby, same index value %d\n", A.index);
+//    }
     A.state = WAIT_LAYER5;
     A.index++;
     stoptimer_A();
@@ -125,7 +121,7 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {
-
+    tolayer3_A(A.last_packet);
 }
 
 
@@ -150,20 +146,12 @@ void send_ack(int ack) {
 
 
 void B_input(struct pkt packet) {
-//    if (packet.checksum != get_checksum(&packet)) {
-//        printf("  B_input: packet corrupted. send NAK.\n");
-//        send_ack(1 - B.index);
-//        return;
-//    }
-//    if (packet.seqnum != B.index) {
-//        printf("  B_input: not the expected seq. send NAK.\n");
-//        send_ack(1 - B.index);
-//        return;
-//    }
-//    printf("  B_input: recv message: %s\n", packet.payload);
-//    printf("  B_input: send ACK.\n");
 
-//    printf("------------------B.index: %d\n", B.index);
+    printf("seqnum being recieved from B: %d\n", packet.seqnum);
+//    if (packet.seqnum != B.index) {
+//        printf("Wrong seqnum\n");
+//        return;
+//    }
     send_ack(B.index);
     B.index++;
     struct msg message;
