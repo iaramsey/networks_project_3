@@ -53,8 +53,8 @@
 
 
 enum SenderState {
-    WAIT_LAYER5,
-    WAIT_ACK
+    readyToSend,
+    waitingForAck
 };
 
 struct Sender {
@@ -65,18 +65,17 @@ struct Sender {
 } A;
 
 struct Receiver {
-    int index;
+    int expectedSeq;
 
 } B;
 
 
 //GLOBAL VARIABLES FOR SENDER, A
-struct msg messageBuffer[10]; //array of messages that are added from layer 5 (aka test1.txt)
-struct queue *messageQueue;
-q = queueCreate();
+struct pkt packetBuffer[1000]; //array of messages that are added from layer 5 (aka test1.txt)
 int bufferIndex;
 struct pkt window[3]; //array of packets representing the sender's window
-int base; //index for messageBuffer[] for the first message in the window to be sent, i.e. start of the window
+int base; //index for packetBuffer[] for the first message in the window to be sent, i.e. start of the window
+int sequence_number;
 
 
 
@@ -87,66 +86,54 @@ void A_init(int window_size) {
     A.index = 0;
     bufferIndex = 0;
     base = 0;
-//    messageBuffer = {{{0}}};
-//    for (int i = 0; i < 10; i++) {
-//        messageBuffer[i].length = 0;
-//        messageBuffer[i].data = {0};
-//    }
+    sequence_number = 0;
+
 
 }
 
-struct pkt message_to_packet(struct msg message) {
-    struct pkt packet;
-    packet.seqnum = base;
-    packet.acknum = base;
-    packet.length = message.length;
-    memmove(packet.payload, message.data, message.length);
-//    packet.checksum = get_checksum(&packet);
+struct pkt* create_packet(struct msg *message) {
+    // 1. new packet created (use malloc)
+    struct pkt *packet = (struct pkt *)malloc(sizeof(struct pkt));
+    // 2. determine the sequence number
+    packet->seqnum = bufferIndex;
+    // 3. determine the ack number
+    packet->acknum = bufferIndex;
+    // 4. determine length of data in the packet
+    packet->length = message->length;
+    // 5. use memcopy to copy data into the packet
+    memcpy(packet->payload, message->data, message->length);
+    // 6. calculate the checksum and set it to packet->checksum
+    packet->checksum = 0 ^ packet->seqnum ^ packet->acknum ^ packet->length;
+    for(int i = 0; i < sizeof(packet->payload); i++){
+        packet->checksum ^= packet->payload[i];
+    }
+    // 7. increment the sequence number (and modulo by SEQUENCE = 1024 to keep within 1024)
+    sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
+
+//    last_pkt = packet;
+//    total_packet_number++;
     return packet;
-
-
 }
 
 void A_output(struct msg message) {
-
-//    if (A.state != WAIT_LAYER5) {
-//        printf("still waiting for ack, don't send anything. Dropping %s\n", message.data);
-//        return;
-//    }
-
-//    memcpy(messageBuffer[bufferIndex], message, sizeof(message)); //add the new message to the buffer array
-//    messageBuffer[bufferIndex].length = message.length;
-    printf(messageBuffer[bufferIndex].length);
-//    printf(messageBuffer[bufferIndex].length);
-//    memmove(messageBuffer[bufferIndex].data, message.data, message.length);
-    bufferIndex++; //increment buffer index
-
     //sendWindow(base, windowsize)
-    struct pkt packet;
-    //seqnum and acknum are the same when the packet is sent from the sender
-    packet.seqnum = A.index;
-    packet.acknum = A.index;
-//    printf("sequence number being sent form A: %d\n", packet.seqnum);
-    packet.length = message.length;
-    memmove(packet.payload, message.data, message.length);
-    packet.checksum = get_checksum(&packet);
-//    packet = message_to_packet(message);
-    tolayer3_A(packet);
-    starttimer_A(1000.0);
-    A.state = WAIT_ACK;
-    A.last_packet = packet;
+//    printf("message.data: %s\n", message.data);
+    struct pkt packet = *create_packet(&message);
+
+    packetBuffer[bufferIndex] = packet;
+
+//    printf("Here's what's in the buffer at index %d: %s\n", bufferIndex, packetBuffer[bufferIndex].payload);
+    bufferIndex++;
+
+    if (A.state == readyToSend) {
+        printf("sending packet %d from A\n", base);
+//        printf("packet payload: %s\n", packet.payload);
+        tolayer3_A(packetBuffer[base]);
+        starttimer_A(100.0);
+        A.state = waitingForAck;
+        A.last_packet = packet;
+    }
 }
-
-
-int get_checksum(struct pkt *packet) {
-    int checksum = 0;
-    checksum += packet->seqnum;
-    checksum += packet->acknum;
-    for (int i = 0; i < packet->length; i++)
-        checksum += packet->payload[i];
-    return checksum;
-}
-
 
 
 
@@ -155,12 +142,22 @@ void A_input(struct pkt packet) {
 
 
 //    printf("A.index: %d, B.acknum: %d\n", A.index, packet.acknum);
-//    if (A.index == packet.acknum) {
-//        printf("we did it baby, same index value %d\n", A.index);
-//    }
-    A.state = WAIT_LAYER5;
-    A.index++;
+    if (base == packet.acknum) {
+        printf("we did it baby, same index value %d\n", base);
+    }
+    A.state = readyToSend;
+    base++;
+//    printf("base value: %d\n", base);
+    printf("bufferIndex value: %d\n", bufferIndex);
+    if (base >= bufferIndex) {
+        printf("we've gone through all of the messages in the buffer\n");
+        return;
+    }
     stoptimer_A();
+    printf("sending packet %d from A\n", base);
+    tolayer3_A(packetBuffer[base]);
+    starttimer_A(1000.0);
+    A.state = waitingForAck;
 
 }
 
@@ -172,7 +169,7 @@ void A_timerinterrupt() {
 /**** B ENTITY ****/
 
 void B_init(int window_size) {
-    B.index = 0;
+    B.expectedSeq = 0;
 }
 
 
@@ -196,8 +193,11 @@ void B_input(struct pkt packet) {
 //        printf("Wrong seqnum\n");
 //        return;
 //    }
-    send_ack(B.index);
-    B.index++;
+    if (packet.seqnum != B.expectedSeq)
+        return;
+    printf("receiving packet %d from B\n", packet.seqnum);
+    send_ack(B.expectedSeq);
+    B.expectedSeq++;
     struct msg message;
     message.length = packet.length;
     memmove(message.data, packet.payload, packet.length);
