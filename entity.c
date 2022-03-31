@@ -68,6 +68,8 @@ struct Sender {
 
 } A;
 
+int indicator;
+
 struct Receiver {
     int expectedSeq; //expected sequence number B is looking for
 } B;
@@ -96,16 +98,19 @@ void A_init(int window_size) {
     A.base = 0;
     A.state = readyToSend;
     A.bufferSize = 0;
-    A.timerValue = 100.0;
+    A.timerValue = 1000.0;
+    indicator = 0;
 
 
 
 }
 
-struct pkt* create_packet(struct msg *message) {
+
+
+struct pkt* create_packet(struct msg *message, int seqnum, int acknum) {
     struct pkt *packet = (struct pkt *)malloc(sizeof(struct pkt));     // 1. new packet created (use malloc)
-    packet->seqnum = A.bufferIndex;     // 2. determine the sequence number
-    packet->acknum = A.bufferIndex;    // 3. determine the ack number
+    packet->seqnum = seqnum;     // 2. determine the sequence number
+    packet->acknum = acknum;    // 3. determine the ack number
     packet->length = message->length;  // 4. determine length of data in the packet
     memcpy(packet->payload, message->data, message->length);    // 5. use memcopy to copy data into the packet
     packet->checksum = get_checksum(packet);
@@ -118,13 +123,15 @@ struct pkt* create_packet(struct msg *message) {
 
 void A_output(struct msg message) {
 
-    struct pkt packet = *create_packet(&message); //create packet from message parameter
+    struct pkt packet = *create_packet(&message, A.bufferIndex, A.bufferIndex); //create packet from message parameter
     A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
     A.bufferIndex++; //increment buffer index
     A.bufferSize++; //increment size
 
+
     if (A.state == readyToSend) { //only send packet if sender is ready
-        printf("sending packet %d from A\n", A.base);
+        printf("A_output: sending packet %d from A with checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
+
         tolayer3_A(A.packetBuffer[A.base]); //send the packet from base
         //EVENTUALLY WILL BE SEND WINDOW HERE
         starttimer_A(A.timerValue);
@@ -133,24 +140,31 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
-
-//    if (A.state != waitingForAck) {
-//        printf("not waiting for ack\n");
-//        return;
-//    }
+    printf("receiving ack from B with seqnum: %d and checksum %d\n", packet.seqnum, packet.checksum);
+    if (A.state != waitingForAck) {
+        printf("not waiting for ack\n");
+        return;
+    }
+//    printf("expected checksum: %d\n", get_checksum(&packet));
+    if (packet.checksum != get_checksum(&packet)) {
+//        printf("actual checksum: %d\n", packet.checksum);
+//        printf("expected checksum: %d\n", get_checksum(&packet));
+        printf("A received wrong checksum in ack packet from B\n");
+//        printf("A.base: %d, B.expectedSeq: %d\n", A.base, B.expectedSeq);
+        indicator = 1;
+//        exit(1);
+        return;
+    }
 //
-//    if (packet.checksum != get_checksum(&packet)) {
-//        printf("  A_input: packet corrupted. drop.\n");
-//        return;
-//    }
-//
-//    if (packet.acknum != A.base) {
-//        printf("  A_input: not the expected ACK. drop.\n");
-//        return;
-//    }
+    if (packet.acknum != A.base) {
+        printf("  A_input: not the expected ACK. drop.\n");
+        return;
+    }
 //    if (A.base == packet.acknum) {
 //        printf("we did it baby, same index value %d\n", A.base);
 //    }
+
+    printf("we did it, ready to increment base\n");
     A.state = readyToSend;
     A.base++;
 //    printf("A.base value: %d\n", A.base);
@@ -161,24 +175,26 @@ void A_input(struct pkt packet) {
     }
 
     stoptimer_A();
-    printf("sending packet %d from A\n", A.base);
+    printf("A_input: sending packet %d from A with checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
     tolayer3_A(A.packetBuffer[A.base]);
     starttimer_A(A.timerValue);
     A.state = waitingForAck;
+
 
 }
 
 void A_timerinterrupt() {
     if (A.state != waitingForAck) {
-        printf("not waiting for ack, don't care\n");
+        printf("not waiting for ack, don't care about timer expiring\n");
         return;
     }
 //    tolayer3_A(A.last_packet);
 //    stoptimer_A();
-    printf("sending packet %d from A\n", A.base);
+    printf("A_timerinterrupt: sending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
     tolayer3_A(A.packetBuffer[A.base]);
     starttimer_A(A.timerValue);
     A.state = waitingForAck;
+//    exit(1);
 }
 
 
@@ -189,32 +205,48 @@ void B_init(int window_size) {
 }
 
 
-void send_ack(int ack) {
-    struct pkt packet;
-    packet.acknum = ack;
-    packet.seqnum = ack;
-    char myArray[32] = {0};
-    memmove(packet.payload, myArray, 32);
-    packet.length = 0;
+void send_ack(struct pck *packet) {
 
-//    packet.checksum = get_checksum(&packet);
-    tolayer3_B(packet);
+////    struct pkt packet;
+////    packet.acknum = ack;
+////    packet.seqnum = ack;
+//    struct msg message;
+//    char myArray[32] = {0};
+//    memmove(message.data, myArray, 32);
+////    packet.length = 0;
+//
+//    struct pkt packet = *create_packet(&message, ack, ack); //create packet from message parameter
+//
+////    packet.checksum = get_checksum(&packet);
+//    printf("sending ack packet from B with seqnum: %d and checksum: %d\n", packet.seqnum, packet.checksum);
+//    tolayer3_B(packet);
 }
 
 
 void B_input(struct pkt packet) {
 
 //    printf("seqnum being recieved from B: %d\n", packet.seqnum);
-//    if (packet.seqnum != B.expectedSeq) {
-//        printf("Wrong seqnum: %d\n", packet.seqnum);
-//        return;
-//    }
-//    if (packet.checksum != get_checksum(&packet)) {
-//        printf("wrong checksum\n");
-//        return;
-//    }
-    printf("receiving packet %d from B\n", packet.seqnum);
-    send_ack(B.expectedSeq);
+
+    if (packet.checksum != get_checksum(&packet)) {
+        printf("wrong checksum recieved from B\n");
+        return;
+    }
+    printf("receiving packet %d from B with checksum %d\n", packet.seqnum, packet.checksum);
+    if (packet.seqnum < B.expectedSeq) {
+        printf("packet already succesfully received, send the next one\n");
+//        send_ack(packet.seqnum);
+        tolayer3_B(packet);
+        return;
+    }
+    if (packet.seqnum != B.expectedSeq) {
+        printf("Wrong seqnum received from B: %d. Indicator: %d. Expected seqnum: %d\n", packet.seqnum, indicator, B.expectedSeq);
+
+        return;
+    }
+//    send_ack(packet.seqnum);
+    printf("sending ack packet from B with seqnum: %d and checksum: %d\n", packet.seqnum, packet.checksum);
+    tolayer3_B(packet);
+    printf("incremented B expected\n");
     B.expectedSeq++;
     struct msg message;
     message.length = packet.length;
