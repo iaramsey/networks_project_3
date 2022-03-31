@@ -94,7 +94,7 @@ int get_checksum(struct pkt *packet) {
     int checksum = 0;
     checksum ^= packet->seqnum;
     checksum ^= packet->acknum;
-    for (int i = 0; i < 20; ++i)
+    for (int i = 0; i < 32; ++i)
         checksum ^= packet->payload[i];
     return checksum;
 }
@@ -134,22 +134,28 @@ void A_input(struct pkt packet) {
     printf("\n");
     printf("-------ack received from B, Counter: %d-------\n", sequence_number);
     
-    // 1. if packet corrupted, drop it
-    if(packet.checksum != packet.acknum){
-        printf("CHECKSUM INDICATES CORRUPTION\n");
+    // if A is not expecting an awknowledgement, drop
+    if (state != WAIT_ACK) {
+        printf("A_input: A->B only. drop.\n");
+        return;
+    }    
+    // if packet corrupted, drop it
+    if(packet.checksum != get_checksum(&packet)){
+        printf("A input: CHECKSUM INDICATES CORRUPTION\n");
         // return from A_input w/o doing anything
         return;
     }
-    // 2. if it isnt corrupted, and ack is not for the packet that you sent, drop it
+    // if it isnt corrupted, and ack is not for the packet that you sent, drop it
     if(packet.acknum != sequence_number){
-        printf("ACK IS NOT FOR PACKET THAT WAS SENT\n");
+        printf("A input: ACK IS NOT FOR PACKET THAT WAS SENT\n");
         // return from A_input w/o doing anything
         return;
     }
     // 3. If recieved properly
     sequence_number = (sequence_number + 1) % 2; // to alternate between 0 and 1
     // stop the timer and return
-    printf("TIMER HAS BEEN STOPPED\n");
+    printf("A input: TIMER HAS BEEN STOPPED\n");
+    state = WAIT_DATA;
     stoptimer_A();
     printf("****EXIT A_INPUT****\n");
 }
@@ -158,6 +164,10 @@ void A_timerinterrupt() {
     printf("****ENTER TIMER_INTERRUPT****\n");
     // go here due to timeout
     // use to resend packet
+    if (state != WAIT_ACK) {
+        printf("A_timerinterrupt: not waiting ACK. ignore event.\n");
+        return;
+    }
     printf("TIMEOUT OCURRED, RESEND LAST PACKET WITH SEQUENCE NUMBER: %d\n", last_pkt.seqnum);
     tolayer3_A(last_pkt);
     // restart the timer
@@ -179,7 +189,7 @@ void send_ack(int ack) {
     // set ack value to passed in ack
     ack_packet.acknum = ack;
     // filler value for checksum, needs to be computed
-    ack_packet.checksum = ack_packet.acknum;
+    ack_packet.checksum = get_checksum(&ack_packet);
     tolayer3_B(ack_packet);
     printf("****EXIT SEND_ACK****\n");
 }
@@ -187,40 +197,31 @@ void send_ack(int ack) {
 void B_input(struct pkt packet) {
     printf("Enter B_input");
     //1. check if packet is valid based on checksum
-    int pass_checksum = 0;
-    int pass_seqnum = 0;
-    int expected_checksum = packet.seqnum ^ packet.acknum ^ packet.length;
-    for(int i = 0; i < packet.length; i++){
-        expected_checksum ^= packet.payload[i];
-    }
-    if(expected_checksum == packet.checksum){
-        pass_checksum = 1;
-    }
-    else{
+    int expected_checksum = get_checksum(&packet);
+    if(expected_checksum != packet.checksum){
+        send_ack(1 - ((expected_seqnum + 1) % 2));
         printf("B_input checksum doesn't match expected_checksum");
+        return;
     }
-    printf("B_input expected_checksum = %d, packet_checksum = %d\n", expected_checksum, packet.checksum);
     //2. check if sequence number matches expected sequence number
-    if(packet.seqnum == expected_seqnum){
-        pass_seqnum = 1;
-    }
-    else{
+    if(packet.seqnum != expected_seqnum){
+        send_ack(1 - ((expected_seqnum + 1) % 2));
         printf("B_input seqnum doesn't match expected_seqnum");
+        return;
     }
-    //3. strip message and length from packet and send to layer 5
-    if((pass_checksum == 1) && (pass_seqnum == 1)){
-        // only increment expected_seqnum if conditions met
-        expected_seqnum = (expected_seqnum + 1) % 2;
-        //check incoming packet for sequence 
-        struct msg message;
-        message.length = packet.length;
-        for(int i = 0; i < packet.length; i++){
-            message.data[i] = packet.payload[i];
-        }
-        tolayer5_B(message);
-        //4. create new packet that acknowledges current packet and send to layer 3
-        send_ack(packet.seqnum); // the ack value should match the sequence number
+
+    //3. else send to layer 5
+    
+    //check incoming packet for sequence 
+    struct msg message;
+    message.length = packet.length;
+    for(int i = 0; i < packet.length; i++){
+        message.data[i] = packet.payload[i];
     }
+    send_ack(expected_seqnum); // the ack value should match the sequence number
+    //4. create new packet that acknowledges current packet and send to layer 3
+    tolayer5_B(message);
+    expected_seqnum = (expected_seqnum + 1) % 2;
     printf("Exit B_input");
 }
 
