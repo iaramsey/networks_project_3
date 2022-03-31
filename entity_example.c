@@ -70,10 +70,6 @@ int get_checksum(struct pkt *packet) {
 
 /* called from layer 5, passed the data to be sent to other side */
 void A_output(struct msg message) {
-    if (A.state != WAIT_LAYER5) {
-        printf("  A_output: not yet acked. drop the message: %s\n", message.data);
-        return;
-    }
     printf("  A_output: send packet: %s\n", message.data);
     struct pkt packet;
     packet.seqnum = A.seq;
