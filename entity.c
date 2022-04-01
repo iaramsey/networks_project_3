@@ -51,14 +51,6 @@
 #include "simulator.h"
 
 
-
-
-enum SenderState {
-    readyToSend,
-    waitingForAck,
-    waitingForLayer5
-};
-
 struct Sender {
     int bufferCapacity;
     struct pkt packetBuffer[1024]; //array of packets that are waiting to be sent to B
@@ -79,7 +71,7 @@ struct Receiver {
 } B;
 
 
-int incrementCounter(int counter, int bufferSize) {
+int incrementCounter(int counter, int bufferSize) { //might get rid of this and just do ++
     if (counter == bufferSize-1)
         return 0;
     else
@@ -91,17 +83,16 @@ int get_checksum(struct pkt *packet) {
     int checksum = 0;
     checksum += packet->seqnum;
     checksum += packet->acknum;
-    if (packet->length > 32)
+    if (packet->length > 32) //IMPORTANT CHECK FOR IF THE LENGTH ITSELF IS CORRUPTED
         packet->length = 32;
     for (int i = 0; i < packet->length; ++i)
         checksum += packet->payload[i];
     return checksum;
-//    return 7;
 }
 
 void sendWindow() {
     int i = A.base;
-    printf("is this reached?\n");
+    printf("sending window------\n");
     while (i < A.bufferIndex && i < A.base + A.window_size - 1) {
     printf("sending packet %d\n", i);
         tolayer3_A(A.packetBuffer[i]);
@@ -117,9 +108,6 @@ void A_init(int window_size) {
     indicator = 0;
     A.bufferCapacity = 1024;
     A.window_size = window_size;
-
-
-
 }
 
 
@@ -138,8 +126,6 @@ struct pkt* create_ack_packet(int acknum) {
     struct pkt *packet = (struct pkt *)malloc(sizeof(struct pkt));     // 1. new packet created (use malloc)
     packet->seqnum = 0;     // 2. determine the sequence number
     packet->acknum = acknum;    // 3. determine the ack number
-    packet->length = 32;  // 4. determine length of data in the packet
-    memcpy(packet->payload, B.zeroArray, 32);    // 5. use memcopy to copy data into the packet
     packet->checksum = get_checksum(packet);
     return packet;
 }
@@ -203,11 +189,10 @@ void B_init(int window_size) {
 
 
 void B_input(struct pkt packet) {
-    if (packet.checksum == get_checksum(&packet) && packet.seqnum == B.expectedSeq) {
+    if (packet.length <= 32 && packet.checksum == get_checksum(&packet) && packet.seqnum == B.expectedSeq) {
         printf("B received right packet and is incrementing expected value\n");
         struct msg message;
         message.length = packet.length;
-        printf("is it reaching this\n");
         memcpy(message.data, packet.payload, packet.length); //THIS IS CAUSING A SEG FAULT
         tolayer5_B(message);
         B.ack_packet.acknum = B.expectedSeq;
