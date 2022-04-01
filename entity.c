@@ -60,12 +60,13 @@ enum SenderState {
 };
 
 struct Sender {
-    enum SenderState state; //state of the sender
+    int bufferCapacity;
     struct pkt packetBuffer[1024]; //array of packets that are waiting to be sent to B
     int bufferIndex; //value for the next new message to be added to the buffer, should be ahead of A.base
     int base; //starting value for the sender window
     int bufferSize; //number of packets currently in the queue, ++ when A receives a message from layer 5, -- when A receives an ACK from B
     float timerValue;
+    int window_size;
 
 } A;
 
@@ -78,13 +79,12 @@ struct Receiver {
 } B;
 
 
-
-
-
-
-
-
-
+int incrementCounter(int counter, int bufferSize) {
+    if (counter == bufferSize-1)
+        return 0;
+    else
+        return counter + 1;
+}
 /**** A ENTITY ****/
 
 int get_checksum(struct pkt *packet) {
@@ -99,13 +99,24 @@ int get_checksum(struct pkt *packet) {
 //    return 7;
 }
 
+void sendWindow() {
+    int i = A.base;
+    printf("is this reached?\n");
+    while (i < A.bufferIndex && i < A.base + A.window_size - 1) {
+    printf("sending packet %d\n", i);
+        tolayer3_A(A.packetBuffer[i]);
+        i++;
+    }
+}
+
 void A_init(int window_size) {
     A.bufferIndex = 1;
     A.base = 1;
-    A.state = readyToSend;
     A.bufferSize = 0;
     A.timerValue = 1000.0;
     indicator = 0;
+    A.bufferCapacity = 1024;
+    A.window_size = window_size;
 
 
 
@@ -120,10 +131,6 @@ struct pkt* create_packet(struct msg *message, int seqnum, int acknum) {
     packet->length = message->length;  // 4. determine length of data in the packet
     memcpy(packet->payload, message->data, message->length);    // 5. use memcopy to copy data into the packet
     packet->checksum = get_checksum(packet);
-//    packet->checksum = 0 ^ packet->seqnum ^ packet->acknum ^ packet->length;     // 6. calculate the checksum and set it to packet->checksum
-//    for(int i = 0; i < sizeof(packet->payload); i++){
-//        packet->checksum ^= packet->payload[i];
-//    }
     return packet;
 }
 
@@ -141,58 +148,35 @@ struct pkt* create_ack_packet(int acknum) {
 void A_output(struct msg message) {
 
     struct pkt packet = *create_packet(&message, A.bufferIndex, 1); //create packet from message parameter
+    A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
     if (A.bufferIndex == A.base) {
-        printf("A_output: sending packet %d from A with checksum %d\n", packet.seqnum, packet.checksum);
-        tolayer3_A(packet); //send the packet from base
+//        printf("A_output: sending packet %d from A with checksum %d\n", packet.seqnum, packet.checksum);
+//        tolayer3_A(packet); //send the packet from base
+        sendWindow();
         //EVENTUALLY WILL BE SEND WINDOW HERE
         starttimer_A(A.timerValue);
-        A.state = waitingForAck; //change state because now we're waitng for an ack
     }
 
-    A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
-
-
-    A.bufferIndex++; //increment buffer index
+    A.bufferIndex = incrementCounter(A.bufferIndex, A.bufferCapacity); //increment buffer index
     A.bufferSize++; //increment size
-//    struct pkt packet;
-//    packet.seqnum = A.bufferIndex;
-//    packet.acknum = A.bufferIndex;
-//    packet.length = message.length;
-//    memcpy(packet.payload, message.data, message.length);
-//    packet.checksum = get_checksum(&packet);
+    if (A.bufferSize > A.bufferCapacity) {
+        printf("buffer full\n");
+        exit(1);
+    }
 
-
-
-
-
-
-//    if (A.state == readyToSend) { //only send packet if sender is ready
-//        printf("A_output: sending packet %d from A with checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
-//
-//        tolayer3_A(A.packetBuffer[A.base]); //send the packet from base
-//        //EVENTUALLY WILL BE SEND WINDOW HERE
-//        starttimer_A(A.timerValue);
-//        A.state = waitingForAck; //change state because now we're waitng for an ack
-//    }
 }
 
 void A_input(struct pkt packet) {
 
     printf("receiving ack from B with acknum: %d and checksum %d\n", packet.acknum, packet.checksum);
-    printf("ack.payload: %s\n", packet.payload);
-    //
-//    printf("packet checksum: %d\n", get_checksum(&packet));
-//packet.checksum == get_checksum(&packet) && GET_CHECKSUM IS CAUSING A SEG FAULT
-//    printf("%d %d %s\n", packet.seqnum, packet.acknum, packet.payload);
-    if (packet.checksum == get_checksum(&packet) && packet.acknum == A.base) {
-        printf("ack succesfully received, increment base\n");
-        A.base++;
-        printf("-------------------------------------\n");
-        printf("A.base: %d, A.bufferIndex: %d\n", A.base, A.bufferIndex);
+    if (packet.checksum == get_checksum(&packet)) {
+        printf("ack successfully received, increment base\n");
+        A.bufferSize--;
+        A.base = packet.acknum + 1;
         if (A.base >= A.bufferIndex)
             stoptimer_A();
         else
-        starttimer_A(A.timerValue);
+            starttimer_A(A.timerValue);
     }
     else
         printf("ack packet is corrupted\n");
@@ -201,18 +185,9 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {
-    if (A.state != waitingForAck) {
-        printf("not waiting for ack, don't care about timer expiring\n");
-        return;
-    }
-//    tolayer3_A(A.last_packet);
-//    stoptimer_A();
-    printf("packet dropped resending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
-
-    tolayer3_A(A.packetBuffer[A.base]);
+//    printf("packet dropped resending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
+    sendWindow();
     starttimer_A(A.timerValue);
-    A.state = waitingForAck;
-
 //    exit(1);
 }
 
@@ -237,12 +212,11 @@ void B_input(struct pkt packet) {
         tolayer5_B(message);
         B.ack_packet.acknum = B.expectedSeq;
         B.ack_packet.checksum = get_checksum(&B.ack_packet);
-        B.expectedSeq++;
+        B.expectedSeq = incrementCounter(B.expectedSeq, A.bufferCapacity);
     }
     else
         printf("B didn't receive the desired packet. ExpectedSeq: %d, received seqnum: %d\n", B.expectedSeq, packet.seqnum);
     printf("B is sending ack packet with acknum: %d and checksum: %d\n", B.ack_packet.acknum, B.ack_packet.checksum);
-    printf("B.ack_packet.payload: %s\n", B.ack_packet.payload);
     tolayer3_B(B.ack_packet);
 //    exit(1);
 }

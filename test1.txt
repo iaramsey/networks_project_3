@@ -146,7 +146,7 @@ void A_output(struct msg message) {
         tolayer3_A(packet); //send the packet from base
         //EVENTUALLY WILL BE SEND WINDOW HERE
         starttimer_A(A.timerValue);
-        A.state = waitingForAck; //change state because now we're waitng for an ack
+//        A.state = waitingForAck; //change state because now we're waitng for an ack
     }
 
     A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
@@ -201,10 +201,10 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {
-    if (A.state != waitingForAck) {
-        printf("not waiting for ack, don't care about timer expiring\n");
-        return;
-    }
+//    if (A.state != waitingForAck) {
+//        printf("not waiting for ack, don't care about timer expiring\n");
+//        return;
+//    }
 //    tolayer3_A(A.last_packet);
 //    stoptimer_A();
     printf("packet dropped resending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
