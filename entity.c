@@ -91,9 +91,12 @@ int get_checksum(struct pkt *packet) {
     int checksum = 0;
     checksum += packet->seqnum;
     checksum += packet->acknum;
+    if (packet->length > 32)
+        packet->length = 32;
     for (int i = 0; i < packet->length; ++i)
         checksum += packet->payload[i];
     return checksum;
+//    return 7;
 }
 
 void A_init(int window_size) {
@@ -138,6 +141,14 @@ struct pkt* create_ack_packet(int acknum) {
 void A_output(struct msg message) {
 
     struct pkt packet = *create_packet(&message, A.bufferIndex, 1); //create packet from message parameter
+//    struct pkt packet;
+//    packet.seqnum = A.bufferIndex;
+//    packet.acknum = A.bufferIndex;
+//    packet.length = message.length;
+//    memcpy(packet.payload, message.data, message.length);
+//    packet.checksum = get_checksum(&packet);
+
+
     A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
     A.bufferIndex++; //increment buffer index
     A.bufferSize++; //increment size
@@ -157,10 +168,14 @@ void A_input(struct pkt packet) {
 
     printf("receiving ack from B with acknum: %d and checksum %d\n", packet.acknum, packet.checksum);
     printf("ack.payload: %s\n", packet.payload);
-    //packet.checksum == get_checksum(&packet) &&
-    if (packet.acknum == A.base) {
+    //
+//    printf("packet checksum: %d\n", get_checksum(&packet));
+//packet.checksum == get_checksum(&packet) && GET_CHECKSUM IS CAUSING A SEG FAULT
+//    printf("%d %d %s\n", packet.seqnum, packet.acknum, packet.payload);
+    if (packet.checksum == get_checksum(&packet) && packet.acknum == A.base) {
         printf("ack succesfully received, increment base\n");
         A.base++;
+        printf("-------------------------------------\n");
         if (A.base >= A.bufferIndex)
             stoptimer_A();
         else
@@ -180,9 +195,11 @@ void A_timerinterrupt() {
 //    tolayer3_A(A.last_packet);
 //    stoptimer_A();
     printf("packet dropped resending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
+
     tolayer3_A(A.packetBuffer[A.base]);
     starttimer_A(A.timerValue);
     A.state = waitingForAck;
+
 //    exit(1);
 }
 
@@ -202,14 +219,15 @@ void B_input(struct pkt packet) {
         printf("B received right packet and is incrementing expected value\n");
         struct msg message;
         message.length = packet.length;
-        memcpy(message.data, packet.payload, packet.length);
+        printf("is it reaching this\n");
+        memcpy(message.data, packet.payload, packet.length); //THIS IS CAUSING A SEG FAULT
         tolayer5_B(message);
         B.ack_packet.acknum = B.expectedSeq;
         B.ack_packet.checksum = get_checksum(&B.ack_packet);
         B.expectedSeq++;
     }
     else
-        printf("B didn't receive the desired packet\n");
+        printf("B didn't receive the desired packet. ExpectedSeq: %d\n", B.expectedSeq);
     printf("B is sending ack packet with acknum: %d and checksum: %d\n", B.ack_packet.acknum, B.ack_packet.checksum);
     printf("B.ack_packet.payload: %s\n", B.ack_packet.payload);
     tolayer3_B(B.ack_packet);
