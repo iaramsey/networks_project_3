@@ -1,0 +1,400 @@
+(venv) iaramsey@iaramsey-XPS-15-9575:~/Documents/networks/networks_project_3$ gcc entity.c simulator.c -o myproject
+(venv) iaramsey@iaramsey-XPS-15-9575:~/Documents/networks/networks_project_3$ ./myproject 0.14 0.25 10 10 0 10 test1.txt
+A: timeout occurred resending window
+A: sending packet 1, base is 1
+A: sending packet 2, base is 1
+A: sending packet 3, base is 1
+A: sending packet 4, base is 1
+A: sending packet 5, base is 1
+A: sending packet 6, base is 1
+A: sending packet 7, base is 1
+A: sending packet 8, base is 1
+A: sending packet 9, base is 1
+A: sending packet 10, base is 1
+B: receiving packet 1 and sending ACK
+A: timeout occurred resending window
+A: sending packet 2, base is 2
+A: sending packet 3, base is 2
+A: sending packet 4, base is 2
+A: sending packet 5, base is 2
+A: sending packet 6, base is 2
+A: sending packet 7, base is 2
+A: sending packet 8, base is 2
+A: sending packet 9, base is 2
+A: sending packet 10, base is 2
+A: sending packet 11, base is 2
+A: timeout occurred resending window
+A: sending packet 2, base is 2
+A: sending packet 3, base is 2
+A: sending packet 4, base is 2
+A: sending packet 5, base is 2
+A: sending packet 6, base is 2
+A: sending packet 7, base is 2
+A: sending packet 8, base is 2
+A: sending packet 9, base is 2
+A: sending packet 10, base is 2
+A: sending packet 11, base is 2
+A: timeout occurred resending window
+A: sending packet 2, base is 2
+A: sending packet 3, base is 2
+A: sending packet 4, base is 2
+A: sending packet 5, base is 2
+A: sending packet 6, base is 2
+A: sending packet 7, base is 2
+A: sending packet 8, base is 2
+A: sending packet 9, base is 2
+A: sending packet 10, base is 2
+A: sending packet 11, base is 2
+B: receiving packet 2 and sending ACK
+B: receiving packet 3 and sending ACK
+B: receiving packet 4 and sending ACK
+A: timeout occurred resending window
+A: sending packet 5, base is 5
+A: sending packet 6, base is 5
+A: sending packet 7, base is 5
+A: sending packet 8, base is 5
+A: sending packet 9, base is 5
+A: sending packet 10, base is 5
+A: sending packet 11, base is 5
+A: sending packet 12, base is 5
+A: sending packet 13, base is 5
+A: sending packet 14, base is 5
+B: receiving packet 5 and sending ACK
+A: timeout occurred resending window
+A: sending packet 6, base is 6
+A: sending packet 7, base is 6
+A: sending packet 8, base is 6
+A: sending packet 9, base is 6
+A: sending packet 10, base is 6
+A: sending packet 11, base is 6
+A: sending packet 12, base is 6
+A: sending packet 13, base is 6
+A: sending packet 14, base is 6
+A: sending packet 15, base is 6
+B: receiving packet 6 and sending ACK
+A: timeout occurred resending window
+A: sending packet 7, base is 7
+A: sending packet 8, base is 7
+A: sending packet 9, base is 7
+A: sending packet 10, base is 7
+A: sending packet 11, base is 7
+A: sending packet 12, base is 7
+A: sending packet 13, base is 7
+A: sending packet 14, base is 7
+A: sending packet 15, base is 7
+A: sending packet 16, base is 7
+B: receiving packet 7 and sending ACK
+A: timeout occurred resending window
+A: sending packet 8, base is 8
+A: sending packet 9, base is 8
+A: sending packet 10, base is 8
+A: sending packet 11, base is 8
+A: sending packet 12, base is 8
+A: sending packet 13, base is 8
+A: sending packet 14, base is 8
+A: sending packet 15, base is 8
+A: sending packet 16, base is 8
+A: sending packet 17, base is 8
+A: timeout occurred resending window
+A: sending packet 8, base is 8
+A: sending packet 9, base is 8
+A: sending packet 10, base is 8
+A: sending packet 11, base is 8
+A: sending packet 12, base is 8
+A: sending packet 13, base is 8
+A: sending packet 14, base is 8
+A: sending packet 15, base is 8
+A: sending packet 16, base is 8
+A: sending packet 17, base is 8
+B: receiving packet 8 and sending ACK
+B: receiving packet 9 and sending ACK
+A: timeout occurred resending window
+A: sending packet 10, base is 10
+A: sending packet 11, base is 10
+A: sending packet 12, base is 10
+A: sending packet 13, base is 10
+A: sending packet 14, base is 10
+A: sending packet 15, base is 10
+A: sending packet 16, base is 10
+A: sending packet 17, base is 10
+A: sending packet 18, base is 10
+A: sending packet 19, base is 10
+B: receiving packet 10 and sending ACK
+A: timeout occurred resending window
+A: sending packet 11, base is 11
+A: sending packet 12, base is 11
+A: sending packet 13, base is 11
+A: sending packet 14, base is 11
+A: sending packet 15, base is 11
+A: sending packet 16, base is 11
+A: sending packet 17, base is 11
+A: sending packet 18, base is 11
+A: sending packet 19, base is 11
+A: sending packet 20, base is 11
+B: receiving packet 11 and sending ACK
+B: receiving packet 12 and sending ACK
+A: timeout occurred resending window
+A: sending packet 13, base is 13
+A: sending packet 14, base is 13
+A: sending packet 15, base is 13
+A: sending packet 16, base is 13
+A: sending packet 17, base is 13
+A: sending packet 18, base is 13
+A: sending packet 19, base is 13
+A: sending packet 20, base is 13
+A: sending packet 21, base is 13
+A: sending packet 22, base is 13
+B: receiving packet 13 and sending ACK
+A: timeout occurred resending window
+A: sending packet 14, base is 14
+A: sending packet 15, base is 14
+A: sending packet 16, base is 14
+A: sending packet 17, base is 14
+A: sending packet 18, base is 14
+A: sending packet 19, base is 14
+A: sending packet 20, base is 14
+A: sending packet 21, base is 14
+A: sending packet 22, base is 14
+A: sending packet 23, base is 14
+B: receiving packet 14 and sending ACK
+B: receiving packet 15 and sending ACK
+A: timeout occurred resending window
+A: sending packet 16, base is 16
+A: sending packet 17, base is 16
+A: sending packet 18, base is 16
+A: sending packet 19, base is 16
+A: sending packet 20, base is 16
+A: sending packet 21, base is 16
+A: sending packet 22, base is 16
+A: sending packet 23, base is 16
+A: sending packet 24, base is 16
+A: sending packet 25, base is 16
+A: timeout occurred resending window
+A: sending packet 16, base is 16
+A: sending packet 17, base is 16
+A: sending packet 18, base is 16
+A: sending packet 19, base is 16
+A: sending packet 20, base is 16
+A: sending packet 21, base is 16
+A: sending packet 22, base is 16
+A: sending packet 23, base is 16
+A: sending packet 24, base is 16
+A: sending packet 25, base is 16
+B: receiving packet 16 and sending ACK
+B: receiving packet 17 and sending ACK
+B: receiving packet 18 and sending ACK
+B: receiving packet 19 and sending ACK
+A: timeout occurred resending window
+A: sending packet 20, base is 20
+A: sending packet 21, base is 20
+A: sending packet 22, base is 20
+A: sending packet 23, base is 20
+A: sending packet 24, base is 20
+A: sending packet 25, base is 20
+A: sending packet 26, base is 20
+A: sending packet 27, base is 20
+A: sending packet 28, base is 20
+A: sending packet 29, base is 20
+B: receiving packet 20 and sending ACK
+B: receiving packet 21 and sending ACK
+B: receiving packet 22 and sending ACK
+B: receiving packet 23 and sending ACK
+B: receiving packet 24 and sending ACK
+B: receiving packet 25 and sending ACK
+B: receiving packet 26 and sending ACK
+A: timeout occurred resending window
+A: sending packet 27, base is 27
+A: sending packet 28, base is 27
+A: sending packet 29, base is 27
+A: sending packet 30, base is 27
+A: sending packet 31, base is 27
+A: sending packet 32, base is 27
+A: sending packet 33, base is 27
+A: sending packet 34, base is 27
+A: sending packet 35, base is 27
+A: sending packet 36, base is 27
+A: timeout occurred resending window
+A: sending packet 27, base is 27
+A: sending packet 28, base is 27
+A: sending packet 29, base is 27
+A: sending packet 30, base is 27
+A: sending packet 31, base is 27
+A: sending packet 32, base is 27
+A: sending packet 33, base is 27
+A: sending packet 34, base is 27
+A: sending packet 35, base is 27
+A: sending packet 36, base is 27
+A: timeout occurred resending window
+A: sending packet 27, base is 27
+A: sending packet 28, base is 27
+A: sending packet 29, base is 27
+A: sending packet 30, base is 27
+A: sending packet 31, base is 27
+A: sending packet 32, base is 27
+A: sending packet 33, base is 27
+A: sending packet 34, base is 27
+A: sending packet 35, base is 27
+A: sending packet 36, base is 27
+B: receiving packet 27 and sending ACK
+A: timeout occurred resending window
+A: sending packet 28, base is 28
+A: sending packet 29, base is 28
+A: sending packet 30, base is 28
+A: sending packet 31, base is 28
+A: sending packet 32, base is 28
+A: sending packet 33, base is 28
+A: sending packet 34, base is 28
+A: sending packet 35, base is 28
+A: sending packet 36, base is 28
+A: sending packet 37, base is 28
+A: timeout occurred resending window
+A: sending packet 28, base is 28
+A: sending packet 29, base is 28
+A: sending packet 30, base is 28
+A: sending packet 31, base is 28
+A: sending packet 32, base is 28
+A: sending packet 33, base is 28
+A: sending packet 34, base is 28
+A: sending packet 35, base is 28
+A: sending packet 36, base is 28
+A: sending packet 37, base is 28
+B: receiving packet 28 and sending ACK
+B: receiving packet 29 and sending ACK
+A: timeout occurred resending window
+A: sending packet 30, base is 30
+A: sending packet 31, base is 30
+A: sending packet 32, base is 30
+A: sending packet 33, base is 30
+A: sending packet 34, base is 30
+A: sending packet 35, base is 30
+A: sending packet 36, base is 30
+A: sending packet 37, base is 30
+A: sending packet 38, base is 30
+A: sending packet 39, base is 30
+B: receiving packet 30 and sending ACK
+B: receiving packet 31 and sending ACK
+B: receiving packet 32 and sending ACK
+B: receiving packet 33 and sending ACK
+A: timeout occurred resending window
+A: sending packet 34, base is 34
+A: sending packet 35, base is 34
+A: sending packet 36, base is 34
+A: sending packet 37, base is 34
+A: sending packet 38, base is 34
+A: sending packet 39, base is 34
+A: sending packet 40, base is 34
+A: sending packet 41, base is 34
+A: sending packet 42, base is 34
+A: sending packet 43, base is 34
+B: receiving packet 34 and sending ACK
+A: timeout occurred resending window
+A: sending packet 35, base is 35
+A: sending packet 36, base is 35
+A: sending packet 37, base is 35
+A: sending packet 38, base is 35
+A: sending packet 39, base is 35
+A: sending packet 40, base is 35
+A: sending packet 41, base is 35
+A: sending packet 42, base is 35
+A: sending packet 43, base is 35
+A: sending packet 44, base is 35
+A: timeout occurred resending window
+A: sending packet 35, base is 35
+A: sending packet 36, base is 35
+A: sending packet 37, base is 35
+A: sending packet 38, base is 35
+A: sending packet 39, base is 35
+A: sending packet 40, base is 35
+A: sending packet 41, base is 35
+A: sending packet 42, base is 35
+A: sending packet 43, base is 35
+A: sending packet 44, base is 35
+B: receiving packet 35 and sending ACK
+A: timeout occurred resending window
+A: sending packet 36, base is 36
+A: sending packet 37, base is 36
+A: sending packet 38, base is 36
+A: sending packet 39, base is 36
+A: sending packet 40, base is 36
+A: sending packet 41, base is 36
+A: sending packet 42, base is 36
+A: sending packet 43, base is 36
+A: sending packet 44, base is 36
+A: sending packet 45, base is 36
+B: receiving packet 36 and sending ACK
+B: receiving packet 37 and sending ACK
+B: receiving packet 38 and sending ACK
+B: receiving packet 39 and sending ACK
+A: timeout occurred resending window
+A: sending packet 40, base is 40
+A: sending packet 41, base is 40
+A: sending packet 42, base is 40
+A: sending packet 43, base is 40
+A: sending packet 44, base is 40
+A: sending packet 45, base is 40
+A: sending packet 46, base is 40
+A: sending packet 47, base is 40
+A: sending packet 48, base is 40
+A: sending packet 49, base is 40
+B: receiving packet 40 and sending ACK
+A: timeout occurred resending window
+A: sending packet 41, base is 41
+A: sending packet 42, base is 41
+A: sending packet 43, base is 41
+A: sending packet 44, base is 41
+A: sending packet 45, base is 41
+A: sending packet 46, base is 41
+A: sending packet 47, base is 41
+A: sending packet 48, base is 41
+A: sending packet 49, base is 41
+A: sending packet 50, base is 41
+B: receiving packet 41 and sending ACK
+B: receiving packet 42 and sending ACK
+B: receiving packet 43 and sending ACK
+A: timeout occurred resending window
+A: sending packet 44, base is 44
+A: sending packet 45, base is 44
+A: sending packet 46, base is 44
+A: sending packet 47, base is 44
+A: sending packet 48, base is 44
+A: sending packet 49, base is 44
+A: sending packet 50, base is 44
+A: sending packet 51, base is 44
+B: receiving packet 44 and sending ACK
+A: timeout occurred resending window
+A: sending packet 45, base is 45
+A: sending packet 46, base is 45
+A: sending packet 47, base is 45
+A: sending packet 48, base is 45
+A: sending packet 49, base is 45
+A: sending packet 50, base is 45
+A: sending packet 51, base is 45
+A: timeout occurred resending window
+A: sending packet 45, base is 45
+A: sending packet 46, base is 45
+A: sending packet 47, base is 45
+A: sending packet 48, base is 45
+A: sending packet 49, base is 45
+A: sending packet 50, base is 45
+A: sending packet 51, base is 45
+B: receiving packet 45 and sending ACK
+B: receiving packet 46 and sending ACK
+B: receiving packet 47 and sending ACK
+B: receiving packet 48 and sending ACK
+A: timeout occurred resending window
+A: sending packet 49, base is 49
+A: sending packet 50, base is 49
+A: sending packet 51, base is 49
+B: receiving packet 49 and sending ACK
+A: timeout occurred resending window
+A: sending packet 50, base is 50
+A: sending packet 51, base is 50
+B: receiving packet 50 and sending ACK
+A: timeout occurred resending window
+A: sending packet 51, base is 51
+B: receiving packet 51 and sending ACK
+ Simulator terminated at time 34034.507812
+ after sending 51 msgs from layer5
+(venv) iaramsey@iaramsey-XPS-15-9575:~/Documents/networks/networks_project_3$ diff -s test1.txt output.dat
+Files test1.txt and output.dat are identical
+(venv) iaramsey@iaramsey-XPS-15-9575:~/Documents/networks/networks_project_3$

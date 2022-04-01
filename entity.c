@@ -83,6 +83,7 @@ int get_checksum(struct pkt *packet) {
 void sendWindow() {
     int i = A.base;
     while (i < A.bufferIndex && i < A.base + A.window_size) {
+        printf("A: sending packet %d, base is %d\n", i, A.base);
         tolayer3_A(A.packetBuffer[i]);
         i++;
     }
@@ -139,14 +140,15 @@ void A_input(struct pkt packet) {
         A.base = packet.acknum + 1; //since B will always send acknum = expectedSeq - 1
         if (A.base >= A.bufferIndex)
             stoptimer_A();
-        else
-            starttimer_A(A.timerValue);
+//        else
+//            starttimer_A(A.timerValue);
     }
 //    else
 //        printf("ack packet is corrupted\n");
 }
 
 void A_timerinterrupt() {
+    printf("A: timeout occurred resending window\n");
     starttimer_A(A.timerValue);
     sendWindow();
 }
@@ -169,6 +171,7 @@ void B_input(struct pkt packet) {
         message.length = packet.length;
         memcpy(message.data, packet.payload, packet.length);
         tolayer5_B(message); //send message up to layer 5
+        printf("B: receiving packet %d and sending ACK\n", packet.seqnum);
         B.ack_packet.acknum = B.expectedSeq; //update ack packet
         B.ack_packet.checksum = get_checksum(&B.ack_packet); //update ack packet
         B.expectedSeq++;
