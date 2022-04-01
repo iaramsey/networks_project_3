@@ -52,22 +52,18 @@
 
 
 struct Sender {
-    int bufferCapacity;
+    int bufferCapacity; //the total capacity of the buffer
     struct pkt packetBuffer[1024]; //array of packets that are waiting to be sent to B
     int bufferIndex; //value for the next new message to be added to the buffer, should be ahead of A.base
     int base; //starting value for the sender window
     int bufferSize; //number of packets currently in the queue, ++ when A receives a message from layer 5, -- when A receives an ACK from B
-    float timerValue;
-    int window_size;
-
+    float timerValue; //value to wait on timer
+    int window_size; //size of the window to be sent
 } A;
-
-int indicator;
 
 struct Receiver {
     int expectedSeq; //expected sequence number B is looking for
-    struct pkt ack_packet;
-    char zeroArray[32];
+    struct pkt ack_packet; //packet that B always sends to A
 } B;
 
 
@@ -77,6 +73,8 @@ int incrementCounter(int counter, int bufferSize) { //might get rid of this and 
     else
         return counter + 1;
 }
+
+
 /**** A ENTITY ****/
 
 int get_checksum(struct pkt *packet) {
@@ -105,7 +103,6 @@ void A_init(int window_size) {
     A.base = 1;
     A.bufferSize = 0;
     A.timerValue = 1000.0;
-    indicator = 0;
     A.bufferCapacity = 1024;
     A.window_size = window_size;
 }
@@ -132,17 +129,12 @@ struct pkt* create_ack_packet(int acknum) {
 
 
 void A_output(struct msg message) {
-
     struct pkt packet = *create_packet(&message, A.bufferIndex, 1); //create packet from message parameter
     A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
     if (A.bufferIndex == A.base) {
-//        printf("A_output: sending packet %d from A with checksum %d\n", packet.seqnum, packet.checksum);
-//        tolayer3_A(packet); //send the packet from base
         sendWindow();
-        //EVENTUALLY WILL BE SEND WINDOW HERE
         starttimer_A(A.timerValue);
     }
-
     A.bufferIndex = incrementCounter(A.bufferIndex, A.bufferCapacity); //increment buffer index
     A.bufferSize++; //increment size
     if (A.bufferSize > A.bufferCapacity) {
@@ -153,7 +145,6 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
-
     printf("receiving ack from B with acknum: %d and checksum %d\n", packet.acknum, packet.checksum);
     if (packet.checksum == get_checksum(&packet)) {
         printf("ack successfully received, increment base\n");
@@ -171,10 +162,8 @@ void A_input(struct pkt packet) {
 }
 
 void A_timerinterrupt() {
-//    printf("packet dropped resending packet %d from A with seqnum %d and checksum %d\n", A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].seqnum, A.packetBuffer[A.base].checksum);
     sendWindow();
     starttimer_A(A.timerValue);
-//    exit(1);
 }
 
 
