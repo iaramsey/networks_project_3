@@ -53,7 +53,7 @@
 
 struct Sender {
     int bufferCapacity; //the total capacity of the buffer
-    struct pkt packetBuffer[1024]; //array of packets that are waiting to be sent to B
+    struct pkt packetBuffer[100000]; //array of packets that are waiting to be sent to B
     int bufferIndex; //value for the next new message to be added to the buffer, should be ahead of A.base
     int base; //starting value for the sender window
     int bufferSize; //number of packets currently in the queue, ++ when A receives a message from layer 5, -- when A receives an ACK from B
@@ -65,14 +65,6 @@ struct Receiver {
     int expectedSeq; //expected sequence number B is looking for
     struct pkt ack_packet; //packet that B always sends to A
 } B;
-
-
-int incrementCounter(int counter, int bufferSize) { //might get rid of this and just do ++
-    if (counter == bufferSize-1)
-        return 0;
-    else
-        return counter + 1;
-}
 
 
 /**** A ENTITY ****/
@@ -90,9 +82,7 @@ int get_checksum(struct pkt *packet) {
 
 void sendWindow() {
     int i = A.base;
-    printf("sending window------\n");
-    while (i < A.bufferIndex && i < A.base + A.window_size - 1) {
-    printf("sending packet %d\n", i);
+    while (i < A.bufferIndex && i < A.base + A.window_size) {
         tolayer3_A(A.packetBuffer[i]);
         i++;
     }
@@ -103,7 +93,7 @@ void A_init(int window_size) {
     A.base = 1;
     A.bufferSize = 0;
     A.timerValue = 1000.0;
-    A.bufferCapacity = 1024;
+    A.bufferCapacity = 100000;
     A.window_size = window_size;
 }
 
@@ -132,10 +122,10 @@ void A_output(struct msg message) {
     struct pkt packet = *create_packet(&message, A.bufferIndex, 1); //create packet from message parameter
     A.packetBuffer[A.bufferIndex] = packet; //add packet to the queue
     if (A.bufferIndex == A.base) {
-        sendWindow();
         starttimer_A(A.timerValue);
+        sendWindow();
     }
-    A.bufferIndex = incrementCounter(A.bufferIndex, A.bufferCapacity); //increment buffer index
+    A.bufferIndex++; //increment buffer index
     A.bufferSize++; //increment size
     if (A.bufferSize > A.bufferCapacity) {
         printf("buffer full\n");
@@ -145,25 +135,20 @@ void A_output(struct msg message) {
 }
 
 void A_input(struct pkt packet) {
-    printf("receiving ack from B with acknum: %d and checksum %d\n", packet.acknum, packet.checksum);
-    if (packet.checksum == get_checksum(&packet)) {
-        printf("ack successfully received, increment base\n");
-        A.bufferSize--;
-        A.base = packet.acknum + 1;
+    if (packet.checksum == get_checksum(&packet)) { //check if packet is not corrupted
+        A.base = packet.acknum + 1; //since B will always send acknum = expectedSeq - 1
         if (A.base >= A.bufferIndex)
             stoptimer_A();
         else
             starttimer_A(A.timerValue);
     }
-    else
-        printf("ack packet is corrupted\n");
-
-
+//    else
+//        printf("ack packet is corrupted\n");
 }
 
 void A_timerinterrupt() {
-    sendWindow();
     starttimer_A(A.timerValue);
+    sendWindow();
 }
 
 
@@ -178,21 +163,20 @@ void B_init(int window_size) {
 
 
 void B_input(struct pkt packet) {
+    //check if packet is corrupted and the seqnum equals B expected
     if (packet.length <= 32 && packet.checksum == get_checksum(&packet) && packet.seqnum == B.expectedSeq) {
-        printf("B received right packet and is incrementing expected value\n");
         struct msg message;
         message.length = packet.length;
-        memcpy(message.data, packet.payload, packet.length); //THIS IS CAUSING A SEG FAULT
-        tolayer5_B(message);
-        B.ack_packet.acknum = B.expectedSeq;
-        B.ack_packet.checksum = get_checksum(&B.ack_packet);
-        B.expectedSeq = incrementCounter(B.expectedSeq, A.bufferCapacity);
+        memcpy(message.data, packet.payload, packet.length);
+        tolayer5_B(message); //send message up to layer 5
+        B.ack_packet.acknum = B.expectedSeq; //update ack packet
+        B.ack_packet.checksum = get_checksum(&B.ack_packet); //update ack packet
+        B.expectedSeq++;
     }
-    else
-        printf("B didn't receive the desired packet. ExpectedSeq: %d, received seqnum: %d\n", B.expectedSeq, packet.seqnum);
-    printf("B is sending ack packet with acknum: %d and checksum: %d\n", B.ack_packet.acknum, B.ack_packet.checksum);
+//    else
+//        printf("B didn't receive the desired packet. ExpectedSeq: %d, received seqnum: %d\n", B.expectedSeq, packet.seqnum);
+//    printf("B is sending ack packet with acknum: %d and checksum: %d\n", B.ack_packet.acknum, B.ack_packet.checksum);
     tolayer3_B(B.ack_packet);
-//    exit(1);
 }
 
 void B_timerinterrupt() { }
